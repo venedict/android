@@ -1,0 +1,154 @@
+<!DOCTYPE html> 
+<html> 
+	<head> 
+	<meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>时间计算</title>
+    <script type="text/javascript" src="jquery.js"></script>
+    <script type="text/javascript">
+	    function dateDiff(date1, date2) {
+	            var type1 = typeof date1, type2 = typeof date2;
+	            if (type1 == 'string')
+	                date1 = stringToTime(date1);
+	            else if (date1.getTime)
+	                date1 = date1.getTime();
+	            if (type2 == 'string')
+	                date2 = stringToTime(date2);
+	            else if (date2.getTime)
+	                date2 = date2.getTime();
+	            return (date1 - date2) / (1000 * 60 * 60*24); //结果是天
+	        }
+	        //字符串转成Time(dateDiff)所需方法
+	        function stringToTime(string) {
+	            var f = string.split(' ', 2);
+	            var d = (f[0] ? f[0] : '').split('-', 3);
+	            var t = (f[1] ? f[1] : '').split(':', 3);
+	            return (new Date(
+	            parseInt(d[0], 10) || null,
+	            (parseInt(d[1], 10) || 1) - 1,
+	            parseInt(d[2], 10) || null,
+	            parseInt(t[0], 10) || null,
+	            parseInt(t[1], 10) || null,
+	            parseInt(t[2], 10) || null
+	            )).getTime();
+	
+	
+	        }
+	        
+	        function dateAdd(date1, type, num) {
+	            var type1 = typeof date1;
+	            
+	            if (type1 == 'string')
+	                date1 = stringToTime(date1);
+	            else if (date1.getTime)
+	                date1 = date1.getTime();
+	           	if(type == 'w')
+	           		date2 = (num * 7 * 1000 * 60 * 60*24) + date1;
+	           	else if(type == 'd')
+	           		date2 = (num * 1000 * 60 * 60*24) + date1;
+	            return new Date(date2);
+	        }
+	        
+	        /**
+	         * 时间格式化 返回格式化的时间
+	         * @param date {object}  可选参数，要格式化的data对象，没有则为当前时间
+	         * @param fomat {string} 格式化字符串，例如：'YYYY年MM月DD日 hh时mm分ss秒 星期' 'YYYY/MM/DD week' (中文为星期，英文为week)
+	         * @return {string} 返回格式化的字符串
+	         * 
+	         * 例子:
+	         * formatDate(new Date("january 01,2012"));
+	         * formatDate(new Date());
+	         * formatDate('YYYY年MM月DD日 hh时mm分ss秒 星期 YYYY-MM-DD week');
+	         * formatDate(new Date("january 01,2012"),'YYYY年MM月DD日 hh时mm分ss秒 星期 YYYY/MM/DD week');
+	         * 
+	         * 格式：   
+	         *    YYYY：4位年,如1993
+	    　　 *　　YY：2位年,如93
+	    　　 *　　MM：月份
+	    　　 *　　DD：日期
+	    　　 *　　hh：小时
+	    　　 *　　mm：分钟
+	    　　 *　　ss：秒钟
+	    　　 *　　星期：星期，返回如 星期二
+	    　　 *　　周：返回如 周二
+	    　　 *　　week：英文星期全称，返回如 Saturday
+	    　　 *　　www：三位英文星期，返回如 Sat
+	         */
+	        function formatDate(date, format) {
+	            if (arguments.length < 2 && !date.getTime) {
+	                format = date;
+	                date = new Date();
+	            }
+	            typeof format != 'string' && (format = 'YYYY年MM月DD日 hh时mm分ss秒');
+	            var week = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', '日', '一', '二', '三', '四', '五', '六'];
+	            return format.replace(/YYYY|YY|MM|DD|hh|mm|ss|星期|周|www|week/g, function(a) {
+	                switch (a) {
+	                case "YYYY": return date.getFullYear();
+	                case "YY": return (date.getFullYear()+"").slice(2);
+	                case "MM": return date.getMonth() + 1;
+	                case "DD": return date.getDate();
+	                case "hh": return date.getHours();
+	                case "mm": return date.getMinutes();
+	                case "ss": return date.getSeconds();
+	                case "星期": return "星期" + week[date.getDay() + 7];
+	                case "周": return "周" +  week[date.getDay() + 7];
+	                case "week": return week[date.getDay()];
+	                case "www": return week[date.getDay()].slice(0,3);
+	                }
+	            });
+	        }
+	      $(function() {
+	    	  
+	    	  $('#search1').click(function(){
+	    		 var data1 = $('#sdate1').val();
+	    		 var data2 = $('#edate1').val();
+	    		 t1 = dateDiff(data2,data1);
+	    		 t2 = parseInt(t1/7.0);
+	    		 t3 = t1-(t2*7.0);
+	   	        // alert(t);
+	   	        var msg = '共'+t1+'天，共'+t2+'周';
+	   	        if(t3!=0)
+	   	        {
+	   	        	msg += '零'+t3+'天'; 	
+	   	        }
+	   	        $('#rd1').text(msg);
+	    	  });
+	    	  
+	    	  $('#search2').click(function(){
+		    		 var data2 = $('#sdate2').val();
+		    		 var select1 = $('#select1').val();
+		    		 var rs = $('#rs').val();
+		    		 t1 = dateAdd(data2,select1,rs);
+		    		 t1 = formatDate(t1, 'YYYY-MM-DD');
+		    		 $('#edate2').text(t1);
+		    	  });
+	      });
+       </script>
+</head>
+
+<body>
+
+	<div>计算日期相差
+		<table>
+			<tr><td>开始日期：</td><td><input type="date" id="sdate1" value=""></tr>
+			<tr><td>结束日期：</td><td><input type="date" id="edate1" value=""></td></tr>
+			<tr><td clospan="2"><button id="search1">确定</button></td></tr>
+			<tr><td>结果：<td id="rd1"></td></tr>
+		</table>
+	</div>
+		<div>计算给定日期
+		<table>
+			<tr><td>开始日期：</td><td><input type="date" id="sdate2" value=""></tr>
+			<tr><td>类型：</td><td>
+			<select id="select1">
+			<option value="d">日</option>
+			<option value="w">周</option>
+			</select></td></tr>
+			<tr><td>数字：</td><td><input type="number" id="rs" value=""></td></tr>
+			<tr><td clospan="2"><button id="search2">确定</button></td></tr>
+			<tr><td>结束日期：</td><td id="edate2"></td></tr>
+		</table>
+	</div>
+	
+</body>
+</html>
