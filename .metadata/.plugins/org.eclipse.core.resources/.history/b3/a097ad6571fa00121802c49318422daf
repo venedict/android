@@ -1,0 +1,369 @@
+<!DOCTYPE html> 
+<html> 
+	<head> 
+	<meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>移动巡检系统客户端</title>
+    <link rel="stylesheet" href="css/jquery.mobile.flatui.min.css">
+    <link rel="stylesheet" href="css/main.css">
+    <script type="text/javascript" src="script/modernizr.js"></script>
+    <script type="text/javascript" src="script/jquery.js"></script>
+    <script type="text/javascript" src="script/global.js"></script>
+    <script type="text/javascript" src="script/jquery.mobile-1.3.1.min.js"></script>
+    <script type="text/javascript" src="script/main.js"></script>
+    <script type="text/javascript" src="script/public.js"></script>
+	<script type="text/javascript" src="script/uuid.js"></script> 
+	<script type="text/javascript" src="script/cordova.js"></script>
+	<script type="text/javascript" src="script/md5.js"></script>
+	<script type="text/javascript" src="script/plugin-toast.js"></script>
+	<script type="text/javascript" src="script/barcodescanner.js"></script>
+	<script type="text/javascript" src="script/bluetooth.js"></script>
+<body>  
+
+<div data-role="page">
+
+	<div data-role="header" data-position="fixed">
+       <a data-role="button" data-icon="arrow-l" data-iconpos="left" href="javascript:void(0)" data-direction="reverse" onclick="page_back()">返回</a>
+       <h1>机房设备巡检单</h1>
+       <a id="save" data-role="button" data-icon="star" data-iconpos="right" href="javascript:void(0)" onclick="page_save()">保存</a>
+	</div>
+
+	<div data-role="content" id="main_content"> 
+		<script>
+			var perpage = JSON.parse(sessionStorage['para']).perpage;
+			if(perpage == "auditlist")
+			{
+				$('#save').hide();
+			}
+			page_drawtable();
+			var auditid = JSON.parse(sessionStorage['para']).auditid;
+			//console.log(JSON.parse(sessionStorage['para']))
+			var tempid = "";
+			
+			var pictureSource; 
+			var destinationType; 
+
+			document.addEventListener("deviceready", onDeviceReady, false);
+			
+			function onDeviceReady() 
+			{
+				pictureSource = navigator.camera.PictureSourceType;
+				destinationType = navigator.camera.DestinationType;
+			}
+	
+			//根据巡检模板绘制巡检表单
+			function page_drawtable()
+			{
+				var db = openDatabase(_database,'1.0',_database,_databasesize);   
+				//查询数据  
+				db.transaction(function(tx){  
+					var sql = " select av.*, ac.scanningtype ";//ac.scanningtype:扫描类型
+					sql += " from t_app_auditinspecvalue av, t_app_audit a, t_app_auditcims ac "
+					sql += " where 1 = 1 ";
+					sql += " and av.auditid = a.id ";
+					sql += " and a.cimsid = ac.id ";
+					sql += " and av.auditid = '" + auditid + "' order by pptype, ptype ";
+					tx.executeSql(sql, [], function(tx,result){  
+					  page_drawtable_function(result);
+				  });  
+				}); 
+			}
+
+			//根据巡检模板绘制巡检表单
+			function page_drawtable_function(result)
+			{
+				var htm = '';
+				
+				htm += '<form id="aform" method="post">';
+				htm += '<div id="cunjianren">';
+				htm += '<input type="checkbox" id="searchFilter" name="searchFilter" data-mini="true" data-theme="c" onclick="page_showyc()"/>';
+				htm += '<label for="searchFilter" data-theme="c">仅显示异常</label>';
+				htm += '</div>';
+				
+				var pptype_old = "";
+				for(var i=0;i<result.rows.length;i++)
+				{  
+					var item=result.rows.item(i);  
+					//console.log(item)
+					if(pptype_old!=item.pptype)
+					{
+						htm += '<h2>'+item.pptype+'</h2>';
+						htm += '<h3>' + item.ptype;
+						if(item.scanningtype != "")
+						{
+							htm += '<input type="hidden" name="scantype" value="' + item.scanningtype + '">';
+							htm += '-----<a id="scanning" href="javascript:void(0)" onclick="page_scan(this)">扫描</a></h3>';
+						}
+						htm += '<ul id="cunjianren_ul" data-role="listview">'; 
+					}
+					
+					htm += '<li>';
+					htm += '<input type="hidden" name="inspectionid" value="' + item.inspectionid + '">';
+					htm += '<input type="hidden" name="id" value="' + item.id + '">';
+					htm += '<input type="hidden" name="pptype" value="' + item.pptype + '">';
+					htm += '<input type="hidden" name="ptype" value="' + item.ptype + '">';
+					htm += '<input type="hidden" name="pname" value="' + item.pname + '">';
+					htm += '<input type="hidden" name="pobject" value="' + item.pobject + '">';
+					htm += '<div class="l">' + item.pname + '</div>';
+					htm += '<div class="r">';
+					htm += '<div class="s"></div>';
+					var statezc = "";
+					var stateyc = "";
+					if(item.pvalue=="正常")
+					{
+						statezc = "selected";
+					}
+					else
+					{
+						stateyc = "selected";
+					}
+					
+					htm += '<select name="pvalue" data-role="slider" data-theme="b" data-mini="true">';
+					htm += '<option value="正常" '+ statezc +'>正常</option>';
+					htm += '<option value="异常" '+ stateyc +'>异常</option>';
+					htm += '</select>';
+					htm += '<a data-role="button" data-mini="true" data-inline="true" data-icon="flat-new" data-theme="b" data-iconpos="notext" href="javascript:void(0)" data-rel="dialog" class="i" onclick="page_memo(this)">备注</a>';
+					htm += '<a data-role="button" data-mini="true" data-inline="true" data-icon="flat-camera" data-theme="b" data-iconpos="notext" href="javascript:void(0)" class="i" onclick="page_camera(this)">拍照</a>';
+					htm += '</div>';
+					htm += '<div class="clear"></div>';
+					htm += '</li>';
+					
+					if(pptype_old=="")
+					{
+						if(item.pptype!=result.rows.item(i+1).pptype)
+						{
+							htm += '</ul>';
+						}
+					}
+					else if(i+1==result.rows.length)
+					{
+						htm += '</ul>';
+					}
+					else if(i+1<result.rows.length)
+					{
+						if(item.pptype!=result.rows.item(i+1).pptype)
+						{
+							htm += '</ul>';
+						}
+					}
+					
+					pptype_old = item.pptype;
+
+				}  
+				htm += '</form>';
+				console.log(htm);
+				$('#auditinspecvaluelist').html(htm);
+				$('#auditinspecvaluelist').trigger('create');
+				
+			}
+
+			// 保存巡检记录到本地数据库
+			function page_save()
+			{
+				var db = openDatabase(_database,'1.0',_database,_databasesize);  
+				//查询数据  
+				db.transaction(function(tx){  
+					var nowtime = pub_daytime_format_value(new Date());
+					var loginname = sessionStorage["loginname"];
+					var username = sessionStorage["username"];
+					var sql = "update t_app_audit set userid = '" + loginname+"', username='"+ username +"',updatetime='"+ nowtime +"'";
+					sql += "where id='" + auditid +"'";
+					// 保存巡检记录
+					tx.executeSql(sql);
+					
+					// 保存巡检记录明细
+					sql = "";
+					for(i=0;i<aform.inspectionid.length;i++)
+					{
+						sql = "";
+						var id = aform.id[i].value;
+						var pvalue = aform.pvalue[i].value;
+									
+						sql = "update t_app_auditinspecvalue set pvalue='"+ pvalue +"'";
+						sql += "where id='" + id +"'";
+						//console.log(sql)
+						tx.executeSql(sql);
+					}
+					window.plugins.ToastPlugin.ShowToast('保存成功！', 3000);
+				}); 
+			}
+			function page_showyc()
+			{
+			//	console.log($('#searchFilter').is(':checked'))
+				var flag = $('#searchFilter').is(':checked');
+				if(flag)
+				{
+					$.each($('select'),function(){
+						
+					//	console.log($(this).parents('li'))
+						var childstate = $(this).val();
+						if(childstate =='正常')
+						{
+							$(this).parents('li').hide();
+						}
+					})
+				}
+				else
+				{
+					$.each($('select'),function(){
+						
+						$(this).parents('li').show();
+					})
+				}
+			}
+			
+			function page_camera(obj)
+			{
+				var _this = $(obj);
+				tempid = _this.parents('li').find('input[name="id"]').val();
+				
+				var db = openDatabase(_database,'1.0',_database,_databasesize);  
+				
+				db.transaction(function(tx){  
+					var sql = "select * from t_app_camerapic where inspecvalueid ='" + tempid +"'";
+					tx.executeSql(sql,[],function(tx,result){  
+					  	if(result.rows.length > 0 || perpage == "auditlist")
+					  	{
+					  		sessionStorage['para']=JSON.stringify({"auditid":auditid,"avalueid":tempid,"perpage":perpage});
+					  		$.mobile.changePage("auditphoto.html");
+					  	}
+					  	else
+					  	{
+					  		navigator.camera.getPicture(onPhotoSuccess, onFail, {
+								quality : 50,
+								destinationType : destinationType.FILE_URI
+							});
+					  	}
+				  	});  
+				});
+			}
+			
+			function page_memo(obj)
+			{
+				var _this = $(obj);
+				//console.log(_this);
+				tempid = "";
+				tempid = _this.parents('li').find('input[name="id"]').val();
+				//console.log(tempid);
+				sessionStorage['para']=JSON.stringify({"auditid":auditid,"avalueid":tempid,"perpage":perpage});
+				$.mobile.changePage("auditmemo.html");
+			}
+			
+			function onPhotoSuccess(imageURI) 
+			{
+				//alert(imageURI)
+				
+				var uuid = (new UUID().createUUID()).replace(/-/g,"");
+				
+				var db = openDatabase(_database,'1.0',_database,_databasesize);  
+				
+				db.transaction(function(tx){
+					var phototime = pub_daytime_format_value(new Date());
+					var sql = "insert into t_app_camerapic (id, inspecvalueid, fileuri, phototime) ";
+					sql += "values ('" + uuid + "', '" + tempid + "', '" + imageURI + "', '" + phototime + "') ";
+	
+					tx.executeSql(sql);
+				});
+					
+			}
+			function onFail(message) 
+			{
+				alert('Failed because: ' + message);
+			}
+			
+			function page_back()
+			{
+				if(perpage == "auditlist")
+				{
+					$.mobile.changePage("auditlist.html");
+				}
+				else
+				{
+					$.mobile.changePage("audittodaylist.html");
+				}
+			}
+			
+			document.addEventListener("deviceready", onDeviceReady, false); 
+			// PhoneGap加载完毕
+			function onDeviceReady() {
+			//按钮事件
+				document.addEventListener("backbutton", eventBackButton, false); //返回键
+				//document.addEventListener("menubutton", eventMenuButton, false); //菜单键
+				//document.addEventListener("searchbutton", eventSearchButton, false); //搜索键
+			}
+			
+			//返回键
+			function eventBackButton(){
+				var strUrl=window.location.href;
+				var arrUrl=strUrl.split("/");
+				var strPage=arrUrl[arrUrl.length-1];
+				var arrUrl=strPage.split(".");
+				var pageName=arrUrl[0];
+				if(pageName == "auditlist" || pageName == "audittodaylist" || pageName == "audituploadlist")
+				{
+					$.mobile.changePage("index.html");
+				}
+				if(pageName == "auditforminput")
+				{
+					$.mobile.changePage("audittodaylist.html");
+				}
+				if(pageName == "auditformlocate")
+				{
+					//TODO 添加todaylist和list的判断
+					var perpage = JSON.parse(sessionStorage['para']).perpage;
+					if(perpage == "auditlist")
+					{
+						$.mobile.changePage("auditlist.html");
+					}
+					else
+					{
+						$.mobile.changePage("audittodaylist.html");
+					}
+					
+				}
+				if(pageName == "auditmemo")
+				{
+					$.mobile.changePage("auditformlocate.html");
+				}
+				if(pageName == "auditphoto")
+				{
+					$.mobile.changePage("auditformlocate.html");
+				}
+				if(pageName == "config")
+				{
+					$.mobile.changePage("login.html");
+				}
+				if(pageName == "help")
+				{
+					$.mobile.changePage("login.html");
+				}
+				if(pageName == "index")
+				{
+					$.mobile.changePage("login.html");
+				}
+			}
+			
+			function page_scan(obj)
+			{
+				var _this = $(obj);
+				scantype = _this.parents('h3').find('input[name="scantype"]').val();
+				if(scantype == "B")
+				{
+					$.mobile.changePage("bluetoothscan.html");
+				}
+				else if(scantype == "D")
+				{
+					window.plugins.barcodeScanner.scan(function(result){
+						alert(result.text)
+					},function(error){
+							alert("扫描失败: " + error);
+						}
+					)
+				}
+			}
+		</script>
+		<div id="auditinspecvaluelist"></div>
+	</div>
+</div>
+</body>
+</html>

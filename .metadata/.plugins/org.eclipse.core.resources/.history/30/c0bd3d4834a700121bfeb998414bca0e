@@ -1,0 +1,8 @@
+[
+<#list data.cimss as aobj>
+{"id":"${aobj.id}","stableid":"${aobj.stableid}","cname":"${aobj.cname}","ctype":"${aobj.ctype}","version":"${aobj.version}"}		
+<#if aobj_index &lt; data.cimss?size - 1>
+,
+</#if> 
+</#list>
+]

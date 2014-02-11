@@ -1,0 +1,206 @@
+<!DOCTYPE html> 
+<html> 
+	<head> 
+	<title>机房巡检移动终端演示系统</title> 
+	<meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1"> 
+	<link rel="stylesheet" href="jquery.mobile-1.1.1.min.css" />
+	<script src="jquery-1.7.1.min.js"></script>
+	<script src="jquery.mobile-1.1.1.min.js"></script>
+	<script src="cordova-2.5.0.js"></script>
+	
+</head> 
+<body> 
+
+<div data-role="page">
+
+	<div data-role="header">
+		<h1>机房巡检</h1>
+		<p id="deviceProperties">Loading device properties...</p>
+		<p id="connectProperties">Loading connect properties...</p>
+	</div>
+
+	<div data-role="content" id="div_content">
+		
+	</div>
+	
+</div>
+<script>
+
+// Wait for Cordova to load
+// 
+document.addEventListener("deviceready", onDeviceReady, false);
+
+// Cordova is loaded and it is now safe to make calls Cordova methods
+//
+function onDeviceReady() {
+	page_check_device();
+	page_check_connection();
+	page_initdb();
+    page_check_cims_update();
+    page_drawtable();
+}
+
+// 检测设备
+function page_check_device()
+{
+    var element = document.getElementById('deviceProperties');
+
+    element.innerHTML = 'Device Name: '     + device.name     + '<br />' + 
+                        'Device Cordova: '  + device.cordova + '<br />' + 
+                        'Device Platform: ' + device.platform + '<br />' + 
+                        'Device UUID: '     + device.uuid     + '<br />' + 
+                        'Device Model: '    + device.model     + '<br />' + 
+                        'Device Version: '  + device.version  + '<br />';
+}
+
+// 检测网络连接状态
+function page_check_connection()
+{
+	
+    var networkState = navigator.connection.type;
+
+    var states = {};
+    states[Connection.UNKNOWN]  = 'Unknown connection';
+    states[Connection.ETHERNET] = 'Ethernet connection';
+    states[Connection.WIFI]     = 'WiFi connection';
+    states[Connection.CELL_2G]  = 'Cell 2G connection';
+    states[Connection.CELL_3G]  = 'Cell 3G connection';
+    states[Connection.CELL_4G]  = 'Cell 4G connection';
+    states[Connection.CELL]     = 'Cell generic connection';
+    states[Connection.NONE]     = 'No network connection';
+
+    var element = document.getElementById('connectProperties');
+	
+    element.innerHTML = states[networkState];
+    
+    return networkState;
+
+}
+
+// 检查更新巡检模板
+function page_check_cims_update()
+{
+	var networkState = navigator.connection.type;
+	if(networkState == Connection.WIFI)
+	{
+		page_download_cims_update();		
+	}
+}
+
+//下载巡检模板更新
+function page_download_cims_update()
+{
+	url = "http://192.168.0.55:8080/irm/module/app/business/audit/auditcims/auditcims_findlastedcims.action";
+	$.ajax(
+	{
+        type: "post",
+        url: url,
+        dataType: "json",
+        success: function (data) 
+        {
+        	// alert(data[0].id + ":" + data[0].cname + ":" + data[0].version);
+        	// 更新本地模板库
+        	page_update_cims(data);
+        },
+        error: function (XMLHttpRequest, textStatus, errorThrown) 
+        {
+			alert(errorThrown);
+        }
+	});
+	
+	alert("巡检模板库更新完成。");
+}
+
+// 根据下载巡检模板更新本地模板
+function page_update_cims(cimss)
+{
+	alert("update begin.");
+	//查询数据  
+	db.transaction(function(tx){  
+		for(i=0;i<cimss.length;i++)
+		{
+			tx.executeSql("insert into t_app_auditcims (id, cname, ctype, version) values('" + cimss[i].id + "', '" + cimss[i].cname + "', '" + cimss[i].ctype + "', '" + cimss[i].version + "') ",[],function(tx,result){  
+		}
+	});  
+	alert("update end.");
+}
+
+// 初始化数据
+function page_initdb()
+{
+	var db = openDatabase('auditdemo','1.0','auditdemo',2*1024*1024);  
+	db.transaction(function(tx)
+	{  
+	    // 巡检表模板
+		tx.executeSql("create table if not exists t_app_auditcims (id, cname, ctype, version)");  
+	    tx.executeSql("create table if not exists t_app_auditinspection (id, cimsid, pptype, ptype, pname, pobject)");  
+	});
+}
+
+// 根据巡检模板绘制巡检表单
+function page_drawtable()
+{
+	var db = openDatabase('auditdemo','1.0','auditdemo',2*1024*1024);  
+	//查询数据  
+	db.transaction(function(tx){  
+	  tx.executeSql("select * from t_app_auditinspection where 1 = 1 and cimsid = '01' ",[],function(tx,result){  
+		  page_drawtable_function(result);
+		  
+		  // page_draw_test1(result);
+		  //page_draw_test();
+	  });  
+	}); 
+}
+
+//根据巡检模板绘制巡检表单
+function page_drawtable_function(result)
+{
+	var htm = '';
+	htm += '<form action="form.php" method="post">';
+ 	htm += '<ul data-role="listview">';
+    for(var i=0;i<result.rows.length;i++)
+    {  
+        var item=result.rows.item(i);  
+
+        htm += '<li data-role="list-divider">' + item.pptype + '</li>';  
+
+        htm += '<li>';
+        htm += '<div data-role="controlgroup" data-type="horizontal">';
+        htm += item.ptype;
+        htm += item.pname;
+		
+        htm += '<input type="checkbox" name="checkbox-zc-' + i + '" id="checkbox-zc-' + i + '" class="custom" />';
+        htm += '<label for="checkbox-zc-' + i + '" >正常</label>';
+ 
+        htm += '<input type="checkbox" name="checkbox-yc-' + i + '" id="checkbox-yc-' + i + '" class="custom" />';
+        htm += '<label for="checkbox-yc-' + i + '" >异常</label>';
+
+        htm += '</div>';
+        htm += '</li>';
+
+
+    }  
+    
+    htm += '</ul>';
+    htm += '</form>';
+    
+    $('#div_content').html(htm).trigger('create');
+}
+
+function page_draw_test()
+{
+	var htm = '';
+	htm += '<ul data-role="listview">';
+    htm += '<li data-role="list-divider">Test</li>';
+    htm += '<li data-theme="c"><a href="index.html">pujian</a></li>';
+    htm += '<li data-role="list-divider">Test</li>';
+    htm += '<li data-theme="c"><a href="index.html">pujian</a></li>';    
+    htm += '</ul>';
+    
+    $('#div_content').html(htm).trigger('create');
+}
+
+</script>
+
+</body>
+</html>

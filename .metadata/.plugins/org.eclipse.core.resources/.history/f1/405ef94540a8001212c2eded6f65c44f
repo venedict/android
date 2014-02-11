@@ -1,0 +1,245 @@
+<!DOCTYPE html> 
+<html> 
+	<head> 
+	<title>瑞易信息.机房巡检移动终端演示系统</title> 
+	<meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1"> 
+	<link rel="stylesheet" href="jquery.mobile-1.1.1.min.css" />
+	<script src="jquery-1.7.1.min.js"></script>
+	<script src="jquery.mobile-1.1.1.min.js"></script>
+	<script src="cordova-2.5.0.js"></script>
+	
+</head> 
+<body> 
+
+<div data-role="page">
+
+	<div data-role="header">
+		<h1>机房巡检</h1>
+		<p id="deviceProperties">Loading device properties111...</p>
+		<p id="connectProperties">Loading connect properties111...</p>
+	</div>
+
+	<div data-role="content" id="div_content">
+		
+	</div>
+	
+</div>
+<script>
+
+auditcims = null;
+cimsid = GetArgsFromHref(window.location.href,"cimsid");
+db = openDatabase('auditdemo','1.0','auditdemo',2*1024*1024);
+
+/*
+document.addEventListener("deviceready", onDeviceReady, false);
+
+function onDeviceReady() {
+	page_initdb();
+	page_loadcims();
+	page_check_cims_version();
+    page_checkdb();
+
+}
+*/
+
+page_initdb();
+page_loadcims();
+page_check_cims_version();
+page_drawtable();
+
+//初始化数据
+function page_initdb()
+{
+	db = openDatabase('auditdemo','1.0','auditdemo',2*1024*1024);  
+	db.transaction(function(tx){  
+		tx.executeSql("create table if not exists t_app_auditcims (id, stableid, cname, ctype, version, isuse)");  
+	    tx.executeSql("create table if not exists t_app_auditinspection (id, cimsid, pptype, ptype, pname, pobject)");
+	});
+}
+
+//检查数据
+function page_checkdb()
+{
+	db.transaction(function(tx){
+		tx.executeSql("select * from t_app_auditcims where 1 = 1 and isuse = 'Y' ",[],function(tx,result){
+			alert("共计模板" + result.rows.length + "项.");
+		})
+	});
+}
+
+//检查数据
+function page_loadcims()
+{
+	db.transaction(function(tx){
+		tx.executeSql("select * from t_app_auditcims where 1 = 1 and id = '" + cimsid + "'",[],function(tx,result){
+			if(result.rows.length>0)
+			{
+				var item = result.rows.item(0);
+				auditcims = new Auditcims(item.id, item.stableid, item.cname, item.ctype, item.version, item.isuse);			
+			}
+		})
+	});
+}
+
+//下载巡检模板更新
+function page_check_cims_version()
+{
+	var url = "http://192.168.0.55:8080/irm/module/app/business/audit/auditcims/auditcims_checkcimsversion.action?id=" + cimsid;
+	var data = pub_jquery_ajax_async(url);
+	page_update_cims(data);
+}
+
+// 根据下载巡检模板更新本地模板
+function page_update_cims(data)
+{
+	try
+	{
+		if(data.updatecheck=='Y')
+		{
+			db.transaction(function(tx)
+			{  
+				var sql = "insert into t_app_auditcims (id, stableid, cname, ctype, version, isuse) values('" + data.cims.id + "', '" + data.cims.stableid + "','" + data.cims.cname + "', '" + data.cims.ctype + "', '" + data.cims.version + "', '" + data.cims.isuse + "') ";
+				tx.executeSql(sql);
+				for(var i=0;i<data.cimsinspections.length;i++)
+				{
+					var inspection = data.cimsinspections[i];
+					sql = "insert into t_app_auditinspection values('" + inspection.id + "', '" + inspection.cimsid + "','" + inspection.pptype + "', '" + inspection.ptype + "', '" + inspection.pname + "', '" + inspection.pobject + "') ";
+					tx.executeSql(sql);
+				}
+				
+			})
+		}
+	}
+	catch(err)
+	{
+		alert(err);
+	}
+}
+
+//根据巡检模板绘制巡检表单
+function page_drawtable()
+{
+	//查询数据  
+	db.transaction(function(tx){  
+	  tx.executeSql("select * from t_app_auditinspection where 1 = 1 and cimsid = '" + cimsid + "'",[],function(tx,result){  
+		  page_drawtable_function(result);
+		  page_checkdb();
+	  });  
+	}); 
+}
+
+//根据巡检模板绘制巡检表单
+function page_drawtable_function(result)
+{
+	var htm = '';
+	htm += '<form action="form.php" method="post">';
+ 	htm += '<ul data-role="listview">';
+ 	var pptype_old = "";
+    for(var i=0;i<result.rows.length;i++)
+    {  
+        var item=result.rows.item(i);  
+
+        if(pptype_old!=item.pptype)
+        {
+            htm += '<li data-role="list-divider">' + item.pptype + '</li>';  
+        }
+
+        htm += '<li>';
+        htm += '<label>' + item.pname + '</label>';
+		
+        htm += '<input type="checkbox" name="checkbox-zc-' + i + '" id="checkbox-zc-' + i + '" class="custom" />';
+        htm += '<label for="checkbox-zc-' + i + '" >正常</label>';
+ 
+        htm += '<input type="checkbox" name="checkbox-yc-' + i + '" id="checkbox-yc-' + i + '" class="custom" />';
+        htm += '<label for="checkbox-yc-' + i + '" >异常</label>';
+
+        htm += '</li>';
+        
+        pptype_old = item.pptype
+    }  
+    
+    htm += '</ul>';
+    htm += '</form>';
+    
+    $('#div_content').html(htm).trigger('create');
+}
+
+
+// 通用AJAX查询
+function pub_jquery_ajax(url, afunction)
+{
+	$.ajax(
+	{
+        type: "post",
+        url: url,
+        dataType: "json",
+        success: function (data) 
+        {
+        	afunction(data);
+        },
+        error: function (XMLHttpRequest, textStatus, errorThrown) 
+        {
+        	alert(errorThrown);
+        }
+	});
+}
+
+//通用AJAX查询
+function pub_jquery_ajax_async(url)
+{
+	var returnvalue;
+	$.ajax(
+	{
+        type: "post",
+        url: url,
+        dataType: "json",
+        async:false,
+        success: function (data) 
+        {
+        	returnvalue = data;
+        },
+        error: function (XMLHttpRequest, textStatus, errorThrown) 
+        {
+        	alert(errorThrown);
+        }
+	});
+
+	return returnvalue;
+}
+
+function GetArgsFromHref(sHref, sArgName)
+{
+	var args = sHref.split("?");
+	var retval = "";
+	
+	if(args[0] == sHref) /*参数为空*/
+	{
+		return retval; /*无需做任何处理*/
+	}
+	var str = args[1];
+	args = str.split("&");
+	for(var i = 0; i < args.length; i ++)
+	{
+		str = args[i];
+		var arg = str.split("=");
+		if(arg.length <= 1) continue;
+		if(arg[0] == sArgName) retval = arg[1];
+	}
+	return retval;
+} 
+
+// 模板类
+function Auditcims(id, stableid, cname, ctype, version, isuse)
+{
+	this.id = id;
+	this.stableid = stableid;
+	this.cname = cname;
+	this.ctype = ctype;
+	this.version = version;
+	this.isuse = isuse;
+}
+
+</script>
+
+</body>
+</html>

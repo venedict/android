@@ -1,0 +1,266 @@
+<!DOCTYPE html> 
+<html> 
+	<head> 
+	<meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>移动巡检系统客户端</title>
+    <link rel="stylesheet" href="../css/jquery.mobile.flatui.min.css">
+    <link rel="stylesheet" href="../css/main.css">
+    <script type="text/javascript" src="../script/modernizr.js"></script>
+    <script type="text/javascript" src="../script/jquery.js"></script>
+    <script type="text/javascript" src="../script/global.js"></script>
+    <script type="text/javascript" src="../script/jquery.mobile-1.3.1.min.js"></script>
+    <script type="text/javascript" src="../script/main.js"></script>
+    <script type="text/javascript" src="../script/public.js"></script>
+    <!-- <script type="text/javascript" src="../script/cordova-2.5.0.js"></script> -->
+</head> 
+<body id="page_index"> 
+
+<div data-role="page">
+
+<div data-role="header" data-position="fixed">
+  <h1>移动巡检系统</h1>
+</div>
+
+<div data-role="content" id="div_content">
+      <form>
+        <label>用户名：</label><input id="loginname" data-clear-btn="true" value="pujian">
+        <label>密码：  </label><input id="password" type="password" data-clear-btn="true" value="1111">
+        
+      <!--  <a data-role="button" data-inline="true" href="javascript:void(0)" id="bt_login" data-icon="arrow-r" data-iconpos="right" data-rel="dialog" onclick="page_login()" class="login">登录</a>
+        <a data-role="button" data-inline="true" href="javascript:void(0)" id="bt_config" data-icon="arrow-r" data-iconpos="right" data-rel="dialog" onclick="page_config()">系统配置</a>
+        <a data-role="button" data-inline="true" href="javascript:void(0)" id="bt_init" data-icon="arrow-r" data-iconpos="right" data-rel="dialog" onclick="page_init()" >系统初始化</a>
+       --> 
+      	<a data-theme="z" data-role="button" data-inline="true" href="portal.html" id="#login" data-icon="flat-man" data-iconpos="left" data-rel="external" onclick="javascript:return(page_login());" class="login">登录</a>
+      	<a data-role="button" data-icon="flat-cross" data-iconpos="left" data-inline="true" data-theme="d" onclick="window.localStorage.removeItem('current_user');window.localStorage.removeItem('current_user_pwd');$('#loginname').val('');$('#password').val('');">注销</a>
+      	<a data-role="button" data-inline="true" href="javascript:void(0)" id="bt_config" data-icon="arrow-r" data-iconpos="right" data-rel="dialog" onclick="page_config()">系统配置</a>
+     	<a data-role="button" data-inline="true" href="javascript:void(0)" id="bt_init" data-icon="arrow-r" data-iconpos="right" data-rel="dialog" onclick="page_init()" >系统初始化</a>
+     	<!-- 暂时可以不管的 --> 	<a data-role="button" href="p06.html" data-theme="y" data-icon="gs-help" data-inline="true" onclick="javascript:void(0)">帮助</a>
+      
+      </form>
+    </div>
+    <div id="footer"> 
+      <div class="copy">2013 <sup>&copy;</sup>陕西瑞易信息科技</div>
+    </div>
+
+</div>
+<script>
+$(function(){
+
+	/*
+	if(!window.sessionStorage)
+	{
+	   alert("浏览暂不支持会话存储，无法登录");
+	   //return;
+	}
+	
+	
+	window.WebSocket = window.WebSocket || window.MozWebSocket;
+	if (!window.WebSocket)
+	{
+	    alert("浏览暂不支持websocket.");
+	    //return;
+	}
+	else
+	{
+		alert("支持websocket");	
+	}
+	*/
+	
+	page_initdb();
+
+})
+
+function page_login()
+{
+	// 用户登录校验
+	var loginname = $('#loginname').val();
+	var password = $('#password').val();
+	var db = openDatabase(_database,'1.0',_database,_databasesize);  
+
+	db.transaction(function(tx){
+		var sql = "select * from t_sys_user where 1 = 1 and loginname = '" + loginname + "' and password = '" + password + "'";
+		tx.executeSql(sql,[],function(tx,result){
+			if(result.rows.length==0)
+			{
+				page_login_fail();
+			}
+			else
+			{
+				var userobj = result.rows.item(0);  
+				page_login_success(userobj);
+			}
+			
+		})	
+	})
+}
+
+function page_login_fail()
+{
+	alert("登录失败！");
+}
+
+function page_login_success(userobj)
+{
+	sessionStorage.setItem("loginname", userobj.loginname);
+	sessionStorage.setItem("username", userobj.cname);
+	window.location = "index.html";
+}
+
+// 系统配置
+function page_config()
+{
+	window.location = "config.html";
+}
+
+// 系统初始化
+function page_init()
+{
+	page_initcims();
+}
+
+//检测网络连接
+function page_check_connection()
+{
+	/*
+	
+    var networkState = navigator.connection.type;
+
+    var states = {};
+    states[Connection.UNKNOWN]  = 'Unknown connection';
+    states[Connection.ETHERNET] = 'Ethernet connection';
+    states[Connection.WIFI]     = 'WiFi connection';
+    states[Connection.CELL_2G]  = 'Cell 2G connection';
+    states[Connection.CELL_3G]  = 'Cell 3G connection';
+    states[Connection.CELL_4G]  = 'Cell 4G connection';
+    states[Connection.CELL]     = 'Cell generic connection';
+    states[Connection.NONE]     = 'No network connection';
+
+    var element = document.getElementById('connectProperties');
+	
+    element.innerHTML = states[networkState];
+    
+    */
+    
+    var networkState = "WIFI";
+    return networkState;
+
+}
+
+//初始化模板
+function page_initcims()
+{
+	var db = openDatabase(_database,'1.0',_database,_databasesize);  
+	db.transaction(function(tx){  
+		tx.executeSql("select * from t_app_auditcims where 1 = 1 and isuse = 'Y' ",[],function(tx,result){
+			if(result.rows.length==0)
+			{
+			    // document.getElementById('runningProperties').innerHTML = '终端模板未定义，从服务器更新！';
+
+			    alert("终端模板未定义，从服务器更新！");
+			    if("NONE" == page_check_connection())
+		    	{
+			    	// document.getElementById('runningProperties').innerHTML = '未连接网络，无法从服务器更新模板，请检查网络!';
+			    	alert("未连接网络，无法从服务器更新模板，请检查网络!");
+			    	return;	
+		    	}
+			    
+			    page_download_cims();
+			}
+		});	
+	});
+}
+
+// 下载服务器模板
+function page_download_cims()
+{
+	var serverip = localStorage.getItem("serverip");
+	var serverport = localStorage.getItem("serverport");
+	
+	if(serverip == null)
+	{
+		serverip = _serverip;
+	}
+	
+	if(serverport == null)
+	{
+		serverport = _serverport;
+	}	
+	
+	var url = "http://" + serverip + ":" + serverport + "/irm/module/app/business/audit/auditcims/auditcims_findlastedcimsall.action";
+	
+	var data = pub_jquery_ajax_async(url);
+	page_update_cims(data);
+}
+
+//根据下载巡检模板更新本地模板
+function page_update_user(users)
+{
+	try
+	{
+		var db = openDatabase(_database,'1.0',_database,_databasesize);  
+		//查询数据  
+		db.transaction(function(tx)
+		{
+			for(var i=0;i<users.length;i++)
+			{
+				tx.executeSql("insert into t_sys_user (id, cname, loginname, password) values('pujian','蒲剑','pujian','1111') ");
+			}
+		})
+	}
+	catch(err)
+	{
+		alert(err);
+	}
+}
+
+//根据下载巡检模板更新本地模板
+function page_update_cims(cimss)
+{
+	try
+	{
+		var db = openDatabase(_database,'1.0',_database,_databasesize);  
+		//查询数据  
+		db.transaction(function(tx)
+		{
+			for(var i=0;i<cimss.length;i++)
+			{
+				tx.executeSql("insert into t_app_auditcims (id, stableid, cname, ctype, version, isuse) values('" + cimss[i].id + "', '" + cimss[i].stableid + "','" + cimss[i].cname + "', '" + cimss[i].ctype + "', '" + cimss[i].version + "', '" + cimss[i].isuse + "') ");
+				for(var j=0;j<cimss[i].inspections.length;j++)
+				{
+					var data = cimss[i].inspections[j];
+					var sql = "insert into t_app_auditinspection values('" + data.id + "', '" + data.cimsid + "','" + data.pptype + "', '" + data.ptype + "', '" + data.pname + "', '" + data.pobject + "') ";
+					tx.executeSql(sql);
+				}
+			}
+			
+			alert("更新完毕！");
+		})
+	}
+	catch(err)
+	{
+		alert(err);
+	}
+}
+
+//初始化数据
+function page_initdb()
+{
+	var db = openDatabase(_database,'1.0',_database,_databasesize);  
+	db.transaction(function(tx){
+		tx.executeSql("create table if not exists t_sys_user (id, cname, loginname, password)");  
+		tx.executeSql("create table if not exists t_app_auditcims (id, stableid, cname, ctype, version, isuse)");  
+	    tx.executeSql("create table if not exists t_app_auditinspection (id, cimsid, pptype, ptype, pname, pobject)");
+	    tx.executeSql("create table if not exists t_app_audit (id, cimsid, ctype, createtime, updatetime, begintime, endtime, cno, userid, username, detailid, description, ispromotion, state, summary, title, isycms, memo)");	 
+	    tx.executeSql("create table if not exists t_app_auditinspecvalue (id, auditid, inspectionid, pptype, ptype, pname, pobject, pvalue, ycms, pedittype, pdate, orderby)");	    
+	    
+		tx.executeSql("insert into t_sys_user (id, cname, loginname, password) values('pujian','蒲剑','pujian','1111') ");
+
+	});
+}
+
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html> 
+<html> 
+	<head> 
+	<meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>时间计算</title>
+    <script type="text/javascript" src="script/jquery.js"></script>
+</head>
+
+<body id="page_portal">
+	<div data-role="page">
+		<div data-role="header" data-position="fixed">
+			<a data-iconpos="left" data-role="button" data-icon="arrow-l"
+				href="javascript:void(0)" data-direction="reverse"
+				onclick="page_return()">返回</a>
+			<h1>移动巡检系统</h1>
+		</div>
+		<div data-role="content">
+			<ul id="portal">
+				<li>
+					<a data-role="button" href="javascript:void(0)"	data-theme="y" data-icon="flat-time" onclick="page_go('audittodaylist.html')">今日巡检</a>
+				</li>
+				<li>
+					<a data-role="button" href="javascript:void(0)" data-theme="y" data-icon="flat-man" onclick="page_go('auditlist.html')">巡检查询</a>
+				</li>
+				<li>
+					<a data-role="button" href="javascript:void(0)" data-theme="y" data-icon="flat-plus" onclick="page_go('audituploadlist.html')">数据上报</a>
+				</li>
+			</ul>
+			<script>
+				//$('#loginname').val(sessionStorage.getItem("loginname"));
+				//$('#username').val(sessionStorage.getItem("username"));
+
+				function page_return() {
+					/*window.confirm('你确认要退出登录吗？')
+					{
+						//window.location = "login.html";
+						$.mobile.changePage("login.html");
+					}*/
+					navigator.notification.confirm( "你确认要退出登录吗？", function(button){
+						if(button == "1")
+						{
+							$.mobile.changePage("login.html");
+						}
+					}, "退出登录", "确定,取消");
+				}
+			</script>
+		</div>
+		<div id="footer">
+			<div class="copy">
+				2013 <sup>&copy;</sup>陕西瑞易信息科技
+			</div>
+		</div>
+	</div>
+
+
+</body>
+</html>

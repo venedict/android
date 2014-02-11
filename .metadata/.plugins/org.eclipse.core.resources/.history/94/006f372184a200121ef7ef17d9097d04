@@ -1,0 +1,116 @@
+<!DOCTYPE html> 
+<html> 
+	<head> 
+	<title>机房巡检移动终端演示系统</title> 
+	<meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1"> 
+	<link rel="stylesheet" href="jquery.mobile-1.1.0.min.css" />
+	<script src="jquery-1.7.1.min.js"></script>
+	<script src="jquery.mobile-1.1.0.min.js"></script>
+</head> 
+<body> 
+
+<div data-role="page">
+
+	<div data-role="header">
+		<h1>机房巡检</h1>
+	</div>
+
+	<div data-role="content" id="div_content">
+		
+	</div>
+	
+</div>
+<script>
+
+//page_initdata();
+//page_drawtable();
+page_draw_test();
+
+function page_initdata()
+{
+	var db = openDatabase('auditdemo','1.0','auditdemo',2*1024*1024);  
+	db.transaction(function(tx){  
+	    // 巡检表模板
+		tx.executeSql("create table t_app_auditcims (id, cname, ctype)");  
+	    tx.executeSql("insert into t_app_auditcims values('01','ERP系统巡检表','系统巡检')");  
+	    tx.executeSql("insert into t_app_auditcims values('02','生产管理系统巡检表','系统巡检')");  
+	    
+	    // 巡检项
+	    tx.executeSql("create table t_app_auditinspection (id, cimsid, pptype, ptype, pname, pobject)");  
+	    
+	    tx.executeSql("insert into t_app_auditinspection values('0101','01','ERP系统','','数据库备份大小','运行情况')");  
+	    tx.executeSql("insert into t_app_auditinspection values('0102','01','ERP系统','','数据库备份状态','运行情况')");  	    
+	    tx.executeSql("insert into t_app_auditinspection values('0103','01','ERP系统','','日志备份大小','运行情况')");  		    
+	    tx.executeSql("insert into t_app_auditinspection values('0104','01','ERP系统','','日志备份状态','运行情况')"); 
+	  
+	    // 巡检项
+	    tx.executeSql("insert into t_app_auditinspection values('0201','02','生产管理系统','','数据库备份大小','运行情况')");  
+	    tx.executeSql("insert into t_app_auditinspection values('0202','02','生产管理系统','','数据库备份状态','运行情况')");  	    
+	    tx.executeSql("insert into t_app_auditinspection values('0203','02','生产管理系统','','日志备份大小','运行情况')");  		    
+	    tx.executeSql("insert into t_app_auditinspection values('0204','02','生产管理系统','','日志备份状态','运行情况')"); 
+	});
+	
+	
+}
+
+// 根据巡检模板绘制巡检表单
+function page_drawtable()
+{
+	var db = openDatabase('auditdemo','1.0','auditdemo',2*1024*1024);  
+	//查询数据  
+	db.transaction(function(tx){  
+	  tx.executeSql("select * from t_app_auditinspection where 1 = 1 and cimsid = '01' ",[],function(tx,result){  
+		  page_drawtable_function(result);
+	  });  
+	}); 
+}
+
+//根据巡检模板绘制巡检表单
+function page_drawtable_function(result)
+{
+	var htm = '';
+ 	htm += '<ul data-role="listview">';
+    for(var i=0;i<5;i++)
+    {  
+         // var item=result.rows.item(i);  
+         
+
+        htm += '<li data-role="list-divider">Test' + i + '</li>';
+        htm += '<li>pujian ....</li>';
+
+         
+         /*
+         htm += '<li data-role="list-divider">' + item.pptype + '</li>';  
+         htm += '<li>';
+
+         htm += '<span>"+item.ptype+"</span>';
+         htm += '<span>"+item.pname+"</span>';
+         htm += '<span>';
+         htm += '<input type='checkbox' class='custom' name='sfzc' id='sfzc" + i + "' /><label>正常</label>';
+         htm += '<input type='checkbox' class='custom' name='sfyc' id='sfyc_" + i + "' /><label>异常</label>';
+         htm += '</span>';
+         htm += '</li>';
+         */
+    }  
+    
+    htm += '</ul>';
+
+    document.getElementById("div_content").innerHTML=htm;  	
+}
+
+function page_draw_test()
+{
+	var htm = '';
+	htm += '<ul data-role="listview">';
+    htm += '<li data-role="list-divider">Test</li>';
+    htm += '<li><a href="index.html">pujian</a></li>';
+    htm += '<li data-role="list-divider">Test</li>';
+    htm += '<li><a href="index.html">pujian</a></li>';    
+    htm += '</ul>';
+    document.getElementById("div_content").innerHTML=htm;  	
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,27 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+<title>Cordova BluetoothPlugin example</title>
+
+<script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+<script type="text/javascript" charset="utf-8" src="bluetooth.js"></script>
+<script type="text/javascript" charset="utf-8" src="jquery.js"></script>
+<script src="MacAddress.js"></script>
+
+<script type="text/javascript" charset="utf-8">
+function enableBT()
+{
+	 var networkInterface = {};
+	 // Get network interface   
+	 networkInterface = window.plugins.macaddress.getMacAddress();
+}
+	
+</script>
+</head>
+
+<body>
+	<button onclick="enableBT()">Enable</button>
+	<div id='bt-data-dump'></div>
+</body>
+</html>

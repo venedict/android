@@ -1,0 +1,8 @@
+[
+<#list data.cimss as cims>
+{"id":"${cims.id}","stableid":"${cims.stableid}","cname":"${cims.cname}","ctype":"${cims.ctype}","version":"${cims.version}"}		
+<#if cims_index &lt; data.cimss?size - 1>
+,
+</#if> 
+</#list>
+]
