@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Copy 2 elements to &apos;assets&apos;&#x0D;&#x0A;- Original project: &apos;Pic&apos;&#x0D;&#x0A;- Destination element: &apos;assets&apos;&#x0D;&#x0A;- Original elements:&#x0D;&#x0A;     test.html&#x0D;&#x0A;     script" description="Copy elements" element1="assets/test.html" element2="assets/script" files="1" flags="589830" folders="1" id="org.eclipse.jdt.ui.copy" policy="org.eclipse.jdt.ui.copyResources" stamp="1371174392783" target="/CodeScan/assets" units="0" version="1.0"/>
+</session>
