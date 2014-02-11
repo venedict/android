@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<syncparticipants>
+<participant displayName="CVS (AuditDemo/ass...www/login.html)" id="org.eclipse.team.cvs.ui.workspace-participant" secondary_id="1375323936600">
+<data consultChangeSets="false" root="false">
+<org.eclipse.team.ui.MODEL_PARTICIPANT_SETTINGS org.eclipse.team.ui.MODEL_PARTICIPANT_DESCRIPTION="AuditDemo/ass...www/login.html" startupAction="none">&#x0A;<org.eclipse.team.ui.MODEL_PARTICIPANT_REFRESH_SCHEDULE org.eclipse.team.ui.CTX_REFRESHSCHEDULE_ENABLED="false" org.eclipse.team.ui.CTX_REFRESHSCHEDULE_INTERVAL="3600" org.eclipse.team.ui.CTX_REFRESHSCHEDULE_RUNONCE="false"/>
+<org.eclipse.team.ui.MODEL_PARTICIPANT_MAPPINGS modelProviderId="org.eclipse.core.resources.modelProvider">&#x0A;<mappings>&#x0A;<resources resourcePath="/AuditDemo/assets/www/audittodaylist.html" resourceType="1"/>
+<resources resourcePath="/AuditDemo/assets/www/help.html" resourceType="1"/>
+<resources resourcePath="/AuditDemo/assets/www/index.html" resourceType="1"/>
+<resources resourcePath="/AuditDemo/assets/www/auditmemo.html" resourceType="1"/>
+<resources resourcePath="/AuditDemo/assets/www/auditlist.html" resourceType="1"/>
+<resources resourcePath="/AuditDemo/assets/www/audituploadlist.html" resourceType="1"/>
+<resources resourcePath="/AuditDemo/assets/www/config.html" resourceType="1"/>
+<resources resourcePath="/AuditDemo/assets/www/login.html" resourceType="1"/>
+<resources resourcePath="/AuditDemo/assets/www/auditformlocate.html" resourceType="1"/>
+<resources resourcePath="/AuditDemo/assets/www/auditforminput.html" resourceType="1"/>
+<resources resourcePath="/AuditDemo/assets/www/auditphoto.html" resourceType="1"/>
+</mappings>
+</org.eclipse.team.ui.MODEL_PARTICIPANT_MAPPINGS>
+</org.eclipse.team.ui.MODEL_PARTICIPANT_SETTINGS>
+</data>
+</participant>
+</syncparticipants>
