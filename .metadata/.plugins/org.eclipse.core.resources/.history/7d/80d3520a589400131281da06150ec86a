@@ -1,0 +1,25 @@
+package com.test.trycatch;
+
+public class TryCatch
+{
+
+	public static void main(String[] args)
+	{
+		// TODO Auto-generated method stub
+		for (int i = 0; i < 2; i++)
+		{
+			try
+			{
+				int[3] a={1,2,3,4};
+				
+			}
+			catch(Exception e)
+			{
+				
+			}
+			
+		}
+
+	}
+
+}

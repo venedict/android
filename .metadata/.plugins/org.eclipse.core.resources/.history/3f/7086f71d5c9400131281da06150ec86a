@@ -1,0 +1,6 @@
+package com.ycy.onekeylock;
+
+public class LockReceiver
+{
+
+}
